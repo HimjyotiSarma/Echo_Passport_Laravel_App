@@ -1,0 +1,144 @@
+services:
+  web:
+    image: dhi.io/nginx:1.30.0-debian13
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-80}:80"
+    volumes:
+      - ./docker/production/nginx/web.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - frontend-net
+      - backend-net
+    depends_on:
+      - frontend
+      - backend-web
+
+  frontend:
+    build:
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - frontend/.env
+    # volumes:
+    #   - frontend-data:/app
+    networks:
+      - frontend-net
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(res => {if(!res.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  backend-web:
+    # image: dhi.io/nginx:1.30.0-debian13
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: backend-web
+    restart: unless-stopped
+
+    # ports:
+    #   - "8000:80"
+    # volumes:
+    #   - ./docker/production/nginx/backend.conf:/etc/nginx/conf.d/default.conf:ro
+    
+    networks:
+      - backend-net
+    depends_on:
+      - backend:
+          condition: service_healthy
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: production
+    restart: unless-stopped
+    command: php-fpm
+    env_file:
+      - backend/.env
+    volumes:
+      - storage-data:/var/www/storage
+    networks:
+      - backend-net
+    depends_on:
+      - database:
+          condition: service_healthy
+      - redis:
+          condition: service_healthy
+      # - worker:
+      #     condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm-healthcheck || exit 1"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+
+  database:
+    image: dhi.io/mysql:9.6.0-debian13
+    restart: always
+    environment:
+      - MYSQL_USER: ${DB_USERNAME}
+      - MYSQL_PASSWORD: ${DB_PASSWORD}
+      - MYSQL_DATABASE: ${DB_NAME}
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - backend-net
+    healthcheck:
+      # test: ["CMD-SHELL", "mysql -u ${DB_USERNAME} -p${DB_PASSWORD} -D ${DB_NAME} -e 'SELECT 1' || exit 1"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u ${DB_USERNAME} -p${DB_PASSWORD} || exit 1"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    
+  redis:
+    image: dhi.io/redis:8.6.2-debian13
+    restart: unless-stopped
+    networks:
+      - backend-net
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG || exit 1"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: production
+    restart: unless-stopped
+    env_file:
+      - backend/.env
+    command: php artisan queue:work
+    volumes:
+      - storage-data:/var/www/storage
+    networks:
+      - backend-net
+    depends_on:
+      - database:
+          condition: service_healthy
+      - redis:
+          condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'queue:work' || exit 1"]
+      interval: 5m
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+volumes:
+  db-data:
+  redis-data:
+

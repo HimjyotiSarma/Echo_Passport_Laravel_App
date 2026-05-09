@@ -1,0 +1,72 @@
+# -------------------------
+# Git & metadata
+# -------------------------
+.git
+.gitignore
+.gitattributes
+
+# -------------------------
+# Environment / secrets
+# -------------------------
+.env
+.env.*
+!.env.example
+
+# -------------------------
+# Node / frontend artifacts
+# -------------------------
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-lock.yaml
+
+# -------------------------
+# Composer artifacts (optional)
+# -------------------------
+vendor
+composer.lock
+
+# -------------------------
+# Laravel storage (runtime data)
+# -------------------------
+storage/*
+!storage/app/public
+!storage/framework
+!storage/logs
+
+# If you are using volume for storage, you can ignore all:
+# storage
+
+# -------------------------
+# Cache / build junk
+# -------------------------
+bootstrap/cache/*
+*.log
+
+# -------------------------
+# Docker files (optional)
+# -------------------------
+docker-compose.yml
+Dockerfile*
+.dockerignore
+
+# -------------------------
+# IDE / OS junk
+# -------------------------
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Tests (optional for prod)
+# -------------------------
+tests
+phpunit.xml
+
+# -------------------------
+# Misc
+# -------------------------
+*.md
