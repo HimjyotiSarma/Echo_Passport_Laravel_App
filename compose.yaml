@@ -5,7 +5,7 @@ services:
     ports:
       - "${WEB_PORT:-80}:80"
     volumes:
-      - ./docker/production/nginx/web.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./backend/docker/production/nginx/web.conf:/etc/nginx/nginx.conf:ro
     networks:
       - frontend-net
       - backend-net
@@ -15,7 +15,8 @@ services:
 
   frontend:
     build:
-      dockerfile: frontend/Dockerfile
+      context: frontend
+      dockerfile: Dockerfile
     restart: unless-stopped
     env_file:
       - frontend/.env
@@ -24,7 +25,7 @@ services:
     networks:
       - frontend-net
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(res => {if(!res.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/status/health').then(res => {if(!res.ok) process.exit(1)}).catch(() => process.exit(1))"]
       interval: 1m30s
       timeout: 30s
       retries: 5
@@ -33,25 +34,25 @@ services:
   backend-web:
     # image: dhi.io/nginx:1.30.0-debian13
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: backend
+      dockerfile: Dockerfile
       target: backend-web
     restart: unless-stopped
 
     # ports:
     #   - "8000:80"
     # volumes:
-    #   - ./docker/production/nginx/backend.conf:/etc/nginx/conf.d/default.conf:ro
+    #   - ./docker/production/nginx/backend.conf:/etc/nginx/nginx.conf:ro
     
     networks:
       - backend-net
     depends_on:
-      - backend:
+      backend:
           condition: service_healthy
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: backend
+      dockerfile: Dockerfile
       target: production
     restart: unless-stopped
     command: php-fpm
@@ -62,10 +63,10 @@ services:
     networks:
       - backend-net
     depends_on:
-      - database:
-          condition: service_healthy
-      - redis:
-          condition: service_healthy
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
       # - worker:
       #     condition: service_healthy
     healthcheck:
@@ -76,33 +77,35 @@ services:
       start_period: 30s
 
   database:
-    image: dhi.io/mysql:9.6.0-debian13
+    image: mysql:9.7.0
     restart: always
     environment:
-      - MYSQL_USER: ${DB_USERNAME}
-      - MYSQL_PASSWORD: ${DB_PASSWORD}
-      - MYSQL_DATABASE: ${DB_NAME}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
       - db-data:/var/lib/mysql
     networks:
       - backend-net
     healthcheck:
       # test: ["CMD-SHELL", "mysql -u ${DB_USERNAME} -p${DB_PASSWORD} -D ${DB_NAME} -e 'SELECT 1' || exit 1"]
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u ${DB_USERNAME} -p${DB_PASSWORD} || exit 1"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u${MYSQL_USER} -p${MYSQL_PASSWORD} || exit 1"]
       interval: 1m30s
       timeout: 30s
       retries: 5
       start_period: 30s
     
   redis:
-    image: dhi.io/redis:8.6.2-debian13
+    image: redis:8.6.3-alpine
     restart: unless-stopped
     networks:
       - backend-net
+    command: redis-server --protected-mode no
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep PONG || exit 1"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 1m30s
       timeout: 30s
       retries: 5
@@ -110,8 +113,8 @@ services:
 
   worker:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: backend
+      dockerfile: Dockerfile
       target: production
     restart: unless-stopped
     env_file:
@@ -122,10 +125,10 @@ services:
     networks:
       - backend-net
     depends_on:
-      - database:
-          condition: service_healthy
-      - redis:
-          condition: service_healthy
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f 'queue:work' || exit 1"]
       interval: 5m
@@ -141,4 +144,5 @@ networks:
 volumes:
   db-data:
   redis-data:
+  storage-data:
 

@@ -1,0 +1,38 @@
+services:
+  frontend:
+    build:
+      context: frontend
+      dockerfile: frontend/Dockerfile.dev
+    restart: unless-stopped
+    env_file:
+      - frontend/.env
+    networks:
+      - frontend-net
+    container_name: echo_app-frontend:development
+    ports:
+      - "3000:3000"
+    environment:
+      - WATCH_POLLING=true
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+            - build/
+            - dist/
+            - .git/
+            - .vscode/
+        - action: rebuild
+          path: ./frontend/package.json
+
+  web:
+  backend:
+
+  redis:
+
+  mysql:
+
+  worker:

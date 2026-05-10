@@ -24,7 +24,6 @@ pnpm-lock.yaml
 # Composer artifacts (optional)
 # -------------------------
 vendor
-composer.lock
 
 # -------------------------
 # Laravel storage (runtime data)

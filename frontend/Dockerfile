@@ -5,7 +5,7 @@
 # IMPORTANT: Docker Hardened Image (DHI) Version Maintenance
 # This Dockerfile uses dhi.io/node. Regularly validate and update to the latest DHI versions in the catalog for security and compatibility.
 
-FROM dhi.io/24.15.0-alpine3.23-dev as dependencies
+FROM dhi.io/node:24.15.0-alpine3.23-dev AS dependencies
 # Set Working Directory
 WORKDIR /app
 # Copy Package related files to Leverage Docker Caching for Dependencies
@@ -28,7 +28,7 @@ RUN --mount=type=cache,target=/root/.npm \
 # ============================================
 # Stage 2: Build Next.js application in standalone mode
 # ============================================
-FROM dhi.io/24.15.0-alpine3.23-dev as builder
+FROM dhi.io/node:24.15.0-alpine3.23-dev AS builder
 # Set Working Directory
 WORKDIR /app
 # Copy Project Dependencies from the Previous Stage
@@ -51,7 +51,7 @@ RUN if [ -f package-lock.json ]; then \
 # ============================================
 # Stage 3: Run Next.js application
 # ============================================
-FROM dhi.io/24.15.0-alpine3.23-dev as runner
+FROM dhi.io/node:24.15.0-alpine3.23-dev AS runner
 # Set Working Directory
 WORKDIR /app
 # Set Production Environment Variable
@@ -61,7 +61,7 @@ ENV HOSTNAME="0.0.0.0"
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy Production Assets from the Builder Stage
-COPY --from=bulder --chown=node:node /app/public ./public
+COPY --from=builder --chown=node:node /app/public ./public
 # Create .next directory and set necessary permissions
 RUN mkdir -p .next && chown node:node .next
 # Copy the Standalone Build Output

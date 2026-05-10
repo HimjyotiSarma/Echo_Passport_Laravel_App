@@ -8,7 +8,7 @@
 
 
 # 1. Build stage
-FROM php:8.5.5-cli as php-builder
+FROM php:8.5.5-cli AS php-builder
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
@@ -37,13 +37,18 @@ COPY composer.json composer.lock ./
 # Install composer
 COPY --from=composer:2.9.7 /usr/bin/composer /usr/bin/composer
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --prefer-dist --quiet
+RUN composer install \
+    --no-dev \
+    --optimize-autoloader \
+    --prefer-dist \
+    --no-scripts
 # Copy the application source code
 COPY . .
+RUN php artisan package:discover --ansi
 
 
 # 2. Node Build stage
-FROM node:24.15.0-alpine3.23 as node-builder
+FROM node:24.15.0-alpine3.23 AS node-builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --silent
@@ -52,7 +57,7 @@ RUN npm run build
 
 
 # 3. Production stage
-FROM php:8.5.5-fpm as production
+FROM php:8.5.5-fpm AS production
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
@@ -67,7 +72,7 @@ RUN curl -L -o /usr/local/bin/php-fpm-healthcheck \
     https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
     && chmod +x /usr/local/bin/php-fpm-healthcheck
 # Copy Entry point script
-COPY ../docker/production/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./docker/production/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Copy Intial Storage structure
@@ -88,7 +93,7 @@ COPY --from=php-builder /usr/local/bin/docker-php-ext-* /usr/local/bin/
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
 # Keep the image-provided FPM global config intact and add pool overrides for our application
-COPY ../docker/common/php-fpm/conf.d/*.conf /usr/local/etc/php-fpm.d/
+COPY ./docker/common/php-fpm/conf.d/*.conf /usr/local/etc/php-fpm.d/
 
 # Copy the built application from the builder stage
 COPY --from=php-builder /var/www /var/www
@@ -112,10 +117,10 @@ EXPOSE 9000
 CMD ["php-fpm"]
 
 # 4. Backend Nginx Stage
-FROM dhi.io/1.30-alpine3.23 as backend-web
-COPY ../docker/production/nginx/backend.conf /etc/nginx/conf.d/default.conf:ro
+FROM dhi.io/nginx:1.30.0-debian13 AS backend-web
+COPY ./docker/production/nginx/backend.conf /etc/nginx/nginx.conf
 COPY --from=php-builder /var/www /var/www
 COPY --from=node-builder /app/public/build /var/www/public/build
-CMD [ "nginx", "-g", "daemon off;" ]
+CMD [ "-g", "daemon off;" ]
 
 
