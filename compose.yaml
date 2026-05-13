@@ -67,8 +67,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      # - worker:
-      #     condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "php-fpm-healthcheck || exit 1"]
       interval: 1m30s
@@ -76,6 +76,20 @@ services:
       retries: 3
       start_period: 30s
 
+  db-migrate:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+      target: production
+    restart: on-failure:3
+    command: php artisan migrate --force
+    env_file:
+      - backend/.env
+    networks:
+      - backend-net
+    depends_on:
+      database:
+        condition: service_healthy
   database:
     image: mysql:9.7.0
     restart: always
@@ -119,7 +133,7 @@ services:
     restart: unless-stopped
     env_file:
       - backend/.env
-    command: php artisan queue:work
+    command: php artisan horizon
     volumes:
       - storage-data:/var/www/storage
     networks:
@@ -129,8 +143,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -f 'queue:work' || exit 1"]
+      test: ["CMD", "php", "artisan", "horizon:status", "--quiet"]
       interval: 5m
       timeout: 30s
       retries: 3

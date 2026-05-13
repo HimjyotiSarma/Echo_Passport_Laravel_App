@@ -2,17 +2,17 @@ services:
   frontend:
     build:
       context: frontend
-      dockerfile: frontend/Dockerfile.dev
-    restart: unless-stopped
+      dockerfile: Dockerfile.dev
+    restart: no
     env_file:
       - frontend/.env
     networks:
       - frontend-net
-    container_name: echo_app-frontend:development
+    container_name: echo_app-frontend-development
     ports:
       - "3000:3000"
     environment:
-      - WATCH_POLLING=true
+      - WATCHPACK_POLLING=true
     develop:
       watch:
         - action: sync
@@ -27,12 +27,97 @@ services:
             - .vscode/
         - action: rebuild
           path: ./frontend/package.json
-
-  web:
+        - action: rebuild
+          path: ./frontend/package-lock.json
   backend:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+      target: development
+    restart: no
+    env_file:
+      - backend/.env
+    volumes:
+      - ./backend:/var/www
+      - /var/www/vendor
+    networks:
+      - backend-net
+    container_name: echo_app-backend_development
+    stdin_open: true
+    tty: true
+    ports:
+      - "8000:8000"
+    depends_on:
+      database:
+        condition: service_started
+      redis:
+        condition: service_started
 
   redis:
+    image: redis:8.6.3-alpine
+    restart: unless-stopped
+    networks:
+      - backend-net
+    container_name: echo_app-redis_development
+    volumes:
+      - redis-dev-data:/data
+    ports:
+      - "6379:6379"
+  redis-insight:
+    image: redis/redisinsight:3.4.2
+    restart: unless-stopped
+    networks:
+      - backend-net
+    container_name: echo_app-redis-insight_development
+    ports:
+      - "5540:5540"
+    environment:
+      RI_REDIS_HOST: redis
+      RI_REDIS_PORT: 6379
+    volumes:
+      - redis-insight-dev-data:/db
+  database:
+    image: mysql:9.7.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    networks:
+      - backend-net
+    container_name: echo_app-mysql_development
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-dev-data:/var/lib/mysql
+  # worker:
+  #   build:
+  #     context: backend
+  #     dockerfile: Dockerfile
+  #     target: development
+  #   restart: unless-stopped
+  #   command: php artisan horizon
+  #   env_file:
+  #     - backend/.env
+  #   volumes:
+  #     - ./backend:/var/www
+  #     - /var/www/vendor
+  #   networks:
+  #     - backend-net
+  #   container_name: echo_app-worker_development
+  #   stdin_open: true
+  #   tty: true
+  #   depends_on:
+  #     database:
+  #       condition: service_started
+  #     redis:
+  #       condition: service_started
 
-  mysql:
-
-  worker:
+volumes:
+  redis-dev-data:
+  redis-insight-dev-data:
+  db-dev-data:
+networks:
+  frontend-net:
+  backend-net:
