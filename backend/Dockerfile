@@ -1,5 +1,5 @@
 # This Dockerfile defines a multi-stage build for a PHP application with a Node.js frontend.
-#  * It consists of three stages: 
+#  * It consists of three stages:
 #  * 1. The first stage builds the PHP application and installs dependencies using Composer.
 #  * 2. The second stage builds the Node.js frontend assets.
 #  * 3. The third stage sets up the production environment with PHP-FPM and includes a health check script.
@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     libicu-dev \
     libzip-dev \
+    nodejs \
+    npm \
     && docker-php-ext-install -j$(nproc) \
     pdo_mysql \
     pdo_pgsql \
@@ -118,7 +120,7 @@ COPY --from=node-builder /app/public/build /var/www/public/build
 # Set the working directory
 WORKDIR /var/www
 
-# Ensure Correct Permissions 
+# Ensure Correct Permissions
 RUN chown -R www-data:www-data /var/www
 
 # Switch to the www-data user for better security
@@ -156,9 +158,15 @@ FROM php-dev-builder AS development
 #     && docker-php-ext-enable redis
 # WORKDIR /var/www
 # COPY --from=compose:2.9.7 /usr/bin/composer /usr/bin/composer
+ARG UID=1000
+ARG GID=1000
+RUN groupadd -g ${GID} laravel && \
+    useradd -u ${UID} -g laravel -m laravel
 COPY ./docker/development/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 WORKDIR /var/www
+RUN chown -R laravel:laravel /var/www
+USER laravel
 EXPOSE 8000
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
 CMD [ "php", "artisan", "serve", "--host=0.0.0.0", "--port=8000" ]

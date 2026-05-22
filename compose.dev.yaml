@@ -3,7 +3,11 @@ services:
     build:
       context: frontend
       dockerfile: Dockerfile.dev
+      args:
+        UID: ${UID}
+        GID: ${GID}
     restart: no
+    user: "${UID}:${GID}"
     env_file:
       - frontend/.env
     networks:
@@ -34,12 +38,16 @@ services:
       context: backend
       dockerfile: Dockerfile
       target: development
+      args:
+        UID: ${UID}
+        GID: ${GID}
+    user: "${UID}:${GID}"
     restart: no
     env_file:
       - backend/.env
     volumes:
       - ./backend:/var/www
-      - /var/www/vendor
+      - backend-vendor:/var/www/vendor
     networks:
       - backend-net
     container_name: echo_app-backend_development
@@ -118,6 +126,7 @@ volumes:
   redis-dev-data:
   redis-insight-dev-data:
   db-dev-data:
+  backend-vendor:
 networks:
   frontend-net:
   backend-net:

@@ -1,0 +1,32 @@
+{
+  "name": "Laravel Backend",
+
+  "service": "backend",
+
+  "remoteUser": "laravel",
+
+  "workspaceFolder": "/var/www",
+
+  "dockerComposeFile": "../../compose.dev.yaml",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug",
+        "onecentlin.laravel-blade",
+        "laravel.vscode-laravel",
+        "editorconfig.editorconfig",
+        "mikestead.dotenv",
+        "shufo.vscode-blade-formatter",
+        "ms-azuretools.vscode-docker"
+      ],
+
+      "settings": {
+        "editor.formatOnSave": true,
+        "php.validate.executablePath": "/usr/local/bin/php",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

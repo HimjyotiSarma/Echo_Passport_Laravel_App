@@ -125,6 +125,8 @@ services:
       retries: 5
       start_period: 30s
 
+  #  TASK: Add a Scheduler service for Laravel (LATER)
+
   worker:
     build:
       context: backend
