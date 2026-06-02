@@ -17,6 +17,8 @@ return [
 
     'middleware' => [],
 
+    'redirect_uri' => env('PASSPORT_REDIRECT_URI', 'http://localhost:8000/auth/callback'),
+
     /*
     |--------------------------------------------------------------------------
     | Encryption Keys

@@ -25,5 +25,20 @@ class AppServiceProvider extends ServiceProvider
         Passport::tokensExpireIn(Carbon::now()->addDays(15));
         Passport::refreshTokensExpireIn(Carbon::now()->addDays(30));
         Passport::personalAccessTokensExpireIn(Carbon::now()->addMonths(6));
+
+        Passport::tokensCan([
+            'user:read'=> 'Read user information',
+            'user:update' => 'Update user information',
+            'user:delete' => 'Delete user account',
+            'message:read' => 'Read messages',
+            'message:create' => 'Create messages',
+            'message:update' => 'Update messages',
+            'message:delete' => 'Delete messages',
+        ]);
+
+        Passport::defaultScopes([
+            'user:read',
+            'message:read',
+        ]);
     }
 }

@@ -1,0 +1,39 @@
+{
+  "name": "Next.js Frontend",
+
+  "service": "frontend",
+
+  "remoteUser": "node",
+
+  "workspaceFolder": "/app",
+
+  "dockerComposeFile": "../../compose.dev.yaml",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next",
+        "ms-azuretools.vscode-docker",
+        "editorconfig.editorconfig",
+        "mikestead.dotenv",
+        "eamodio.gitlens"
+      ],
+
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "js/ts.tsdk.path": "node_modules/typescript/lib",
+        "eslint.validate": [
+          "javascript",
+          "javascriptreact",
+          "typescript",
+          "typescriptreact"
+        ]
+      }
+    }
+  }
+}
