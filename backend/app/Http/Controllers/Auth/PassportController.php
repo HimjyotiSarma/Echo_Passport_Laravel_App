@@ -8,11 +8,17 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
+use Laravel\Passport\Client;
 
 class PassportController extends Controller
 {
     public function redirect(Request $request){
-        $request->session()->put('client_id', $clientId = $request->client_id);
+        $clientId = $request->client_id;
+        $client = Client::findOrFail($clientId);
+        if(! $client){
+            throw new InvalidArgumentException('Invalid client ID');
+        }
+        $request->session()->put('client_id', $clientId);
         // $redirectUri = $request->redirect_uri;
         // Create a random state string and store it in the session
         $request->session()->put('state', $state = Str::random(40));
