@@ -34,7 +34,7 @@ class AuthSessionController extends Controller
     {
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required|confirmed'
+            'password' => 'required'
         ]);
         if(! Auth::attempt($credentials, $request->boolean('remember'))){
             throw ValidationException::withMessages([
@@ -42,7 +42,13 @@ class AuthSessionController extends Controller
             ]);
         }
         $request->session()->regenerate();
-        return back()->with('message', 'Login successful');
+        $pending = $request->session()->pull('oauth.pending_request');
+
+        if($pending){
+            return redirect()->route('passport.redirect', $pending);
+        }
+
+        return redirect()->intended('/');
     }
 
     /**

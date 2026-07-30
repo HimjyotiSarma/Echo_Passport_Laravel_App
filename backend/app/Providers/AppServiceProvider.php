@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 
@@ -13,7 +14,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register Telescope for Local debug
+        if ($this->app->environment('local') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
+            $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
+            $this->app->register(TelescopeServiceProvider::class);
+        }
     }
 
     /**
@@ -21,7 +26,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Model Behaviours
+        Model::preventLazyLoading(! app()->isProduction());
+        Model::preventSilentlyDiscardingAttributes( ! app()->isProduction());
+
+        // Passport Configuration
+        Passport::authorizationView('auth.oauth.authorize');
         Passport::tokensExpireIn(Carbon::now()->addDays(7));
         Passport::refreshTokensExpireIn(Carbon::now()->addDays(30));
         Passport::personalAccessTokensExpireIn(Carbon::now()->addMonths(6));

@@ -7,6 +7,13 @@
 
   "workspaceFolder": "/var/www",
 
+  "runServices": [
+    "backend",
+    "database",
+    "redis",
+    "redis-insight"
+  ],
+
   "dockerComposeFile": "../../compose.dev.yaml",
 
   "customizations": {
@@ -28,5 +35,6 @@
         "terminal.integrated.defaultProfile.linux": "bash"
       }
     }
-  }
+  },
+  "shutdownAction": "stopCompose"
 }

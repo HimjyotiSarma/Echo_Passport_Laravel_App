@@ -51,17 +51,20 @@ services:
       - backend-vendor:/var/www/vendor
     networks:
       - backend-net
+      - frontend-net
     container_name: echo_app-backend_development
     stdin_open: true
     tty: true
     ports:
       - "8000:8000"
       - "5173:5173"
+      - "8443:8443"
     depends_on:
       database:
         condition: service_started
       redis:
         condition: service_started
+      
 
   redis:
     image: redis:8.6.3-alpine
@@ -75,7 +78,7 @@ services:
       - "6379:6379"
   redis-insight:
     image: redis/redisinsight:3.4.2
-    restart: unless-stopped
+    restart: no
     networks:
       - backend-net
     container_name: echo_app-redis-insight_development
@@ -86,9 +89,12 @@ services:
       RI_REDIS_PORT: 6379
     volumes:
       - redis-insight-dev-data:/db
+    depends_on:
+      redis:
+        condition: service_started
   database:
     image: mysql:9.7.0
-    restart: unless-stopped
+    restart: no
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}

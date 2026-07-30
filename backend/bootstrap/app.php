@@ -1,8 +1,15 @@
 <?php
 
+use App\Exceptions\ApiExceptionRenderer;
+use App\Http\Middleware\ForceJsonResponse;
+use App\Http\Middleware\InjectBearerToken;
+use App\Http\Middleware\OauthSessionMiddleware;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,8 +20,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'oauth.session' => OauthSessionMiddleware::class
+        ]);
+        $middleware->api(prepend: [
+            EncryptCookies::class,
+            ForceJsonResponse::class,
+            InjectBearerToken::class
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function(AuthenticationException $e, Request $request ){
+            if($request->expectsJson()){
+                return ApiExceptionRenderer::unauthenticated($e, $request);
+            }
+        });
     })->create();

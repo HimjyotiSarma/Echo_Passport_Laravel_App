@@ -3,18 +3,29 @@
 </div> --}}
 
 @props([
-    'type' => 'button'
+    'type' => 'button',
+    'variant' => 'primary',
 ])
+
+@php
+    $variants = [
+        'primary' =>
+            'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800',
+
+        'secondary' =>
+            'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 active:bg-slate-200',
+
+        'danger' =>
+            'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
+    ];
+@endphp
 
 <button
     type="{{ $type }}"
     {{
-        $attributes->merge([
-            'class' =>
-                'w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white
-                 hover:bg-blue-700
-                 active:bg-blue-800
-                 transition'
+        $attributes->class([
+            'w-full rounded-xl px-4 py-3 text-sm font-semibold transition',
+            $variants[$variant] ?? $variants['primary'],
         ])
     }}
 >

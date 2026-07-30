@@ -133,6 +133,8 @@ services:
       dockerfile: Dockerfile
       target: production
     restart: unless-stopped
+    expose:
+      - 8443
     env_file:
       - backend/.env
     command: php artisan horizon
@@ -149,6 +151,34 @@ services:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "php", "artisan", "horizon:status", "--quiet"]
+      interval: 5m
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+
+  # CREATE Reverb Container with command php artisan reverb:start
+  reverb:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    env_file:
+      - backend/.env
+    command: php artisan reverb:start
+    volumes:
+      - storage-data:/var/www/storage
+    networks:
+      - backend-net
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "reverb:start"]
       interval: 5m
       timeout: 30s
       retries: 3

@@ -54,7 +54,7 @@ return [
     |
     */
 
-    'use' => 'default',
+    'use' => 'horizon',
 
     /*
     |--------------------------------------------------------------------------
@@ -197,7 +197,21 @@ return [
     */
 
     'defaults' => [
-        'supervisor-1' => [
+        'messages' => [
+            'connection' => 'redis',
+            'queue' => ['high'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 128,
+            'tries' => 1,
+            'timeout' => 60,
+            'nice' => 0,
+        ],
+
+        'default' => [
             'connection' => 'redis',
             'queue' => ['default'],
             'balance' => 'auto',
@@ -210,25 +224,98 @@ return [
             'timeout' => 60,
             'nice' => 0,
         ],
+
+        'notifications' => [
+            'connection' => 'redis',
+            'queue' => ['notifications', 'mail'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 128,
+            'tries' => 3,
+            'timeout' => 60,
+            'nice' => 0,
+        ],
+
+        'media' => [
+            'connection' => 'redis',
+            'queue' => ['media'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 2,
+            'timeout' => 300,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
         'production' => [
-            'supervisor-1' => [
+            'messages' => [
                 'maxProcesses' => 10,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
+
+            'default' => [
+                'maxProcesses' => 4,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
+
+            'notifications' => [
+                'maxProcesses' => 3,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
+
+            'media' => [
+                'maxProcesses' => 2,
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
         ],
 
         'local' => [
-            'supervisor-1' => [
-                'maxProcesses' => 3,
+
+            'messages' => [
+                'maxProcesses' => 2,
+            ],
+
+            'default' => [
+                'maxProcesses' => 1,
+            ],
+
+            'notifications' => [
+                'maxProcesses' => 1,
+            ],
+
+            'media' => [
+                'maxProcesses' => 1,
             ],
         ],
+
         '*' => [
-            'supervisor-1' => [
-                'maxProcesses' => 3,
+
+            'messages' => [
+                'maxProcesses' => 2,
+            ],
+
+            'default' => [
+                'maxProcesses' => 1,
+            ],
+
+            'notifications' => [
+                'maxProcesses' => 1,
+            ],
+
+            'media' => [
+                'maxProcesses' => 1,
             ],
         ],
     ],
