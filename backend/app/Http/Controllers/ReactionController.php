@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-class MessageReactionController extends Controller
+class ReactionController extends Controller
 {
     //
 }

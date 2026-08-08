@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 
@@ -50,5 +52,12 @@ class AppServiceProvider extends ServiceProvider
             'user:read',
             'message:read',
         ]);
+        // Intercepting Gates
+        Gate::before(function(User $user, string $ability){
+            if($user->isSuperAdmin()){
+                return true;
+            }
+            return null;
+        });
     }
 }

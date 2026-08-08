@@ -17,9 +17,8 @@ return new class extends Migration
             $table->foreignUlid('user_id')->constrained()->cascadeOnDelete();
             $table->string('role')->default(ConversationRole::MEMBER->value);
             $table->timestampTz('joined_at')->useCurrent();
-            $table->timestampTz('last_read_at')->nullable();
+            $table->timestampTz('last_seen_at')->nullable();
             $table->boolean('notification_enabled')->default(true);
-            $table->timestamps();
             $table->primary(['conversation_id', 'user_id']);
         });
     }
