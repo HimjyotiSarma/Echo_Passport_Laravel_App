@@ -85,4 +85,56 @@ class ConversationPolicy
     {
         return false;
     }
+
+    public function addParticipant(User $user, Conversation $conversation): bool
+    {
+        return $conversation->isGroup()
+                &&  $conversation->participants()->wherePivotIn('role', [
+                        ConversationRole::ADMIN,
+                        ConversationRole::OWNER
+                    ])->whereKey('users.id', $user->id)->exists();
+    }
+
+    public function removeParticipant(User $user, Conversation $conversation, User $participant){
+        if($conversation->isGroup()){
+            return false;
+        }
+        $actorRole = $conversation->participants()
+                                  ->whereKey('users.id', $user->id)
+                                  ->membership->role;
+        $targetRole = $conversation->participants()
+                                  ->whereKey('users.id', $participant->id)
+                                  ->membership->role;
+        if($actorRole == ConversationRole::OWNER){
+            return $targetRole !== null;
+        }
+        if($actorRole == ConversationRole::ADMIN){
+            return $targetRole === ConversationRole::MEMBER;
+        }
+        return false;
+    }
+    public function updateParticipant(User $user, Conversation $conversation, User $participant){
+        if(! $conversation->isGroup()){
+            return false;
+        }
+        $actorRole = $conversation->participants()
+                                  ->whereKey('users.id', $user->id)
+                                  ->membership->role;
+        $targetRole = $conversation->participants()
+                                  ->whereKey('users.id', $participant->id)
+                                  ->membership->role;
+
+        if($actorRole == ConversationRole::OWNER){
+            return in_array($targetRole, [
+                ConversationRole::ADMIN,
+                ConversationRole::MEMBER
+            ], true);
+        }
+        if($actorRole == ConversationRole::ADMIN){
+            return $targetRole === ConversationRole::MEMBER;
+        }
+
+        return false;
+
+    }
 }

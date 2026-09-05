@@ -21,11 +21,15 @@ class ConversationParticipant extends Pivot
         'last_seen_at',
         'notification_enabled',
     ];
-    
+
     protected $casts = [
         'role' => ConversationRole::class,
         'joined_at' => 'immutable_datetime',
         'last_seen_at' => 'immutable_datetime'
+    ];
+    protected $fillable = [
+        'role',
+        'notification_enabled'
     ];
 
     public function joinDate(): Attribute {

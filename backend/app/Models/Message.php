@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Hidden(['deleted_at'])]
-#[Fillable(['type', 'body', 'conversation_id', 'reply_to'])]
+#[Fillable(['type', 'body', 'metadata'])]
 #[Table(key: 'id', keyType: 'string', incrementing: false)]
 class Message extends Model
 {
@@ -24,7 +24,13 @@ class Message extends Model
         'type' => MessageType::class,
         'created_at' => 'immutable_datetime',
         'updated_at' => 'immutable_datetime',
+        'metadata' => 'array',
     ];
+    // NOTE: metadata will contain information of system messages typically
+    // e.g : 'metadata' => [
+    //    'event' => 'participant_added',
+    //    'participant_id' => $user->id,
+    //],
 
     public function conversation(): BelongsTo {
         return $this->belongsTo(Conversation::class);

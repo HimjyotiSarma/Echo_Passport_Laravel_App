@@ -39,6 +39,7 @@ class CreateConversation
             $conversation->save();
             $this->addParticipant->handle(
                     $creator,
+                    $creator,
                     $conversation,
                     $conversation->creatorRole()
             );
@@ -48,6 +49,7 @@ class CreateConversation
                     continue;
                 }
                 $this->addParticipant->handle(
+                    $creator,
                     $participant,
                     $conversation,
                     ConversationRole::MEMBER

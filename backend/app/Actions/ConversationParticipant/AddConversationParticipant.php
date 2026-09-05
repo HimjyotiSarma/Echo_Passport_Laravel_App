@@ -2,7 +2,10 @@
 
 namespace App\Actions\ConversationParticipant;
 
+use App\Actions\Message\CreateSystemMessage;
 use App\Enums\ConversationRole;
+use App\Enums\SystemMessageEvent;
+use App\Events\ConversationParticipantAdded;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\User;
@@ -13,7 +16,10 @@ class AddConversationParticipant
     /**
      * Create a new class instance.
      */
-    public function handle(User $user, Conversation $conversation, ConversationRole $role, bool $notificationEnable = true): ConversationParticipant
+    public function __construct(private readonly CreateSystemMessage $createSystemMessage)
+    {
+    }
+    public function handle(User $creator, User $user, Conversation $conversation, ConversationRole $role, bool $notificationEnable = true): ConversationParticipant
     {
         if($conversation->participants()->whereKey($user->id)->exists()){
             throw ValidationException::withMessages(
@@ -28,7 +34,24 @@ class AddConversationParticipant
             'notification_enabled' =>$notificationEnable
         ]);
 
-        return $conversation->participants()->findOrFail($user->id)->membership;
+        $membership = $conversation->memberships()
+                        ->where('user_id', $user->id)
+                        ->with([
+                            'user',
+                            'conversation',
+                        ])
+                        ->firstOrFail();
+
+        ConversationParticipantAdded::dispatch($membership, $creator);
+        $this->createSystemMessage->handle(
+            $conversation,
+            $creator,
+            SystemMessageEvent::PARTICIPANT_ADDED,
+            [
+                'participant_id' => $user->id
+            ]
+        );
+        return $membership;
 
     }
 }

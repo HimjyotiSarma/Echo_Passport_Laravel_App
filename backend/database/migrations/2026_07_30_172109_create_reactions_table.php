@@ -15,9 +15,9 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->foreignUlid('user_id')->constrained()->cascadeOnDelete();
             $table->foreignUlid('message_id')->constrained()->cascadeOnDelete();
-            $table->string('emoji_code'); // e.g: U+1F600
+            $table->string('emoji_code'); // e.g: 1F600
             $table->timestamps();
-            $table->unique(['message_id', 'user_id', 'emoji_code']);
+            $table->unique(['message_id', 'user_id']);
         });
     }
 
